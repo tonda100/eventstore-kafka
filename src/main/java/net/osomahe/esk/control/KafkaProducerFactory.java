@@ -6,12 +6,8 @@ import static org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CL
 import static org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG;
 
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
+import javax.ejb.Stateless;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
@@ -27,8 +23,7 @@ import net.osomahe.esk.entity.AbstractEvent;
 /**
  * @author Antonin Stoklasek
  */
-@Singleton
-@Startup
+@Stateless
 public class KafkaProducerFactory {
 
     private KafkaProducer<String, AbstractEvent> kafkaProducer;
@@ -39,25 +34,15 @@ public class KafkaProducerFactory {
     @ConfigDefaultValue("localhost:9092")
     private String kafkaServer;
 
-    @PostConstruct
-    public void init(){
+
+    @Produces
+    public KafkaProducer<String, AbstractEvent> getKafkaProducer() {
         Properties props = new Properties();
         props.put(BOOTSTRAP_SERVERS_CONFIG, this.kafkaServer);
         props.put(ACKS_CONFIG, "all");
         props.put(KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         props.put(VALUE_SERIALIZER_CLASS_CONFIG, EventSerializer.class.getName());
 
-        this.kafkaProducer = new KafkaProducer<>(props);
-    }
-
-
-    @Produces
-    public KafkaProducer<String, AbstractEvent> getKafkaProducer(){
-        return this.kafkaProducer;
-    }
-
-    @PreDestroy
-    public void destroy(){
-        this.kafkaProducer.close(5, TimeUnit.SECONDS);
+        return new KafkaProducer<>(props);
     }
 }

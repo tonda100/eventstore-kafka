@@ -5,12 +5,15 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
-import javax.enterprise.concurrent.ManagedExecutorService;
+import javax.enterprise.concurrent.ManagedScheduledExecutorService;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
@@ -55,8 +58,10 @@ public class EventStoreSubscriber {
 
     private KafkaConsumer<String, AbstractEvent> consumer;
 
+    private ScheduledFuture<?> sfConsumerPoll;
+
     @Resource
-    private ManagedExecutorService mes;
+    private ManagedScheduledExecutorService mses;
 
     @Inject
     private Event<AbstractEvent> event;
@@ -78,11 +83,11 @@ public class EventStoreSubscriber {
         for (PartitionInfo pi : partitions) {
             this.consumer.seekToBeginning(Arrays.asList(new TopicPartition(topicName, pi.partition())));
         }
-        this.mes.execute(this::pollMessages);
+        this.sfConsumerPoll = this.mses.scheduleAtFixedRate(this::pollMessages, 0, 100, TimeUnit.MILLISECONDS);
     }
 
     private void pollMessages() {
-        while (true) {
+        synchronized (this.consumer) {
             ConsumerRecords<String, AbstractEvent> records = consumer.poll(100);
             for (ConsumerRecord<String, AbstractEvent> rcd : records) {
                 if (rcd.value() != null) {
@@ -93,6 +98,13 @@ public class EventStoreSubscriber {
                     }
                 }
             }
+        }
+    }
+
+    @PreDestroy
+    public void destroy() {
+        synchronized (this.consumer) {
+            this.sfConsumerPoll.cancel(false);
         }
     }
 }

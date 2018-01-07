@@ -1,5 +1,8 @@
 package net.osomahe.esk.boundary;
 
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.PreDestroy;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 
@@ -41,5 +44,9 @@ public class EventStorePublisher {
             return Integer.parseInt(lastPart);
         }
         return 0;
+    }
+    @PreDestroy
+    public void destroy(){
+        this.kafkaProducer.close(5, TimeUnit.SECONDS);
     }
 }
