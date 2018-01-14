@@ -1,10 +1,13 @@
 package net.osomahe.esk.control;
 
+import static java.lang.System.Logger.Level.DEBUG;
+
 import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -40,6 +43,8 @@ import net.osomahe.esk.entity.AsyncEvent;
 @Startup
 public class EventStoreSubscriber {
 
+    private static final System.Logger logger = System.getLogger(EventStoreSubscriber.class.getName());
+
     @Inject
     @Config
     @ConfigName("event-store.subscriber.group-id")
@@ -74,6 +79,7 @@ public class EventStoreSubscriber {
         Properties props = new Properties();
         props.put(BOOTSTRAP_SERVERS_CONFIG, this.kafkaServer);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, this.groupId);
+        props.put(ConsumerConfig.CLIENT_ID_CONFIG, UUID.randomUUID().toString());
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         this.consumer = new KafkaConsumer<>(props, new StringDeserializer(), new EventDeserializer(eventNameMapper));
@@ -91,6 +97,7 @@ public class EventStoreSubscriber {
             ConsumerRecords<String, AbstractEvent> records = consumer.poll(100);
             for (ConsumerRecord<String, AbstractEvent> rcd : records) {
                 if (rcd.value() != null) {
+                    logger.log(DEBUG, "Polling event " + rcd.value().getClass().getSimpleName());
                     if (rcd.value().getClass().isAnnotationPresent(AsyncEvent.class)) {
                         this.event.fireAsync(rcd.value());
                     } else {

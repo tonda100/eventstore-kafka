@@ -15,9 +15,9 @@ public abstract class AbstractEvent {
 
     private static final int PARTITION_COUNT = 128;
 
-    private String aggregateId;
+    private final String aggregateId;
 
-    private ZonedDateTime dateTime;
+    private final ZonedDateTime dateTime;
 
     public AbstractEvent() {
         String uuid = UUID.randomUUID().toString();
@@ -26,20 +26,22 @@ public abstract class AbstractEvent {
         dateTime = ZonedDateTime.now(ZoneOffset.UTC);
     }
 
+    public AbstractEvent(String aggregateId) {
+        if (aggregateId.contains("-")) {
+            this.aggregateId = aggregateId;
+        } else {
+            int partition = Math.abs(aggregateId.hashCode()) % PARTITION_COUNT;
+            this.aggregateId = String.format("%s-%s", aggregateId, partition);
+        }
+        dateTime = ZonedDateTime.now(ZoneOffset.UTC);
+    }
+
     public String getAggregateId() {
         return this.aggregateId;
     }
 
-    public void setAggregateId(String aggregateId) {
-        this.aggregateId = aggregateId;
-    }
-
     public ZonedDateTime getDateTime() {
         return dateTime;
-    }
-
-    public void setDateTime(ZonedDateTime dateTime) {
-        this.dateTime = dateTime;
     }
 
     @Override
