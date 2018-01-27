@@ -15,9 +15,9 @@ public abstract class AbstractEvent {
 
     private static final int PARTITION_COUNT = 128;
 
-    private final String aggregateId;
+    private String aggregateId;
 
-    private final ZonedDateTime dateTime;
+    private ZonedDateTime dateTime;
 
     public AbstractEvent() {
         String uuid = UUID.randomUUID().toString();
@@ -42,6 +42,14 @@ public abstract class AbstractEvent {
 
     public ZonedDateTime getDateTime() {
         return dateTime;
+    }
+
+    public void setAggregateId(String aggregateId) {
+        this.aggregateId = aggregateId;
+    }
+
+    public void setDateTime(ZonedDateTime dateTime) {
+        this.dateTime = dateTime;
     }
 
     @Override

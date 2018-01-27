@@ -1,11 +1,11 @@
 package net.osomahe.esk.control;
 
-import static java.lang.System.Logger.Level.WARNING;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -24,7 +24,7 @@ import net.osomahe.esk.entity.AbstractEvent;
  */
 public class EventDeserializer implements Deserializer<AbstractEvent> {
 
-    private static final System.Logger logger = System.getLogger(EventDeserializer.class.getName());
+    private static final Logger logger = Logger.getLogger(EventDeserializer.class.getName());
 
     private final EventNameMapper eventNameMapper;
 
@@ -49,7 +49,7 @@ public class EventDeserializer implements Deserializer<AbstractEvent> {
                 return jsonb.fromJson(jsonObject.getJsonObject("data").toString(), oEventClass.get());
             }
         } catch (IOException e) {
-            logger.log(WARNING, "Could not deserialize event: " + e.getMessage());
+            logger.log(Level.WARNING, "Could not deserialize event: " + e.getMessage());
             throw new SerializationException("Could not deserialize event", e);
         }
         return null;

@@ -1,7 +1,5 @@
 package net.osomahe.esk.boundary;
 
-import static java.lang.System.Logger.Level.DEBUG;
-
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PreDestroy;
@@ -10,9 +8,8 @@ import javax.inject.Inject;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.tamaya.inject.api.Config;
 
-import net.osomahe.config.entity.Config;
-import net.osomahe.config.entity.ConfigName;
 import net.osomahe.esk.entity.AbstractEvent;
 
 
@@ -22,11 +19,8 @@ import net.osomahe.esk.entity.AbstractEvent;
 @Stateless
 public class EventStorePublisher {
 
-    private static final System.Logger logger = System.getLogger(EventStorePublisher.class.getName());
-
     @Inject
-    @Config
-    @ConfigName("event-store.publisher.default-topic")
+    @Config(value = "event-store.publisher.default-topic", defaultValue = "default-topic")
     private String topicName;
 
     @Inject
@@ -37,7 +31,6 @@ public class EventStorePublisher {
     }
 
     public <T extends AbstractEvent> void publish(T event, String topicName) {
-        logger.log(DEBUG, "Publishing event " + event.getClass().getSimpleName());
         int partition = getPartition(event);
         ProducerRecord<String, AbstractEvent> record = new ProducerRecord<>(topicName, partition, event.getAggregateId(), event);
         this.kafkaProducer.send(record);

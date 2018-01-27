@@ -13,10 +13,8 @@ import javax.inject.Inject;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.tamaya.inject.api.Config;
 
-import net.osomahe.config.entity.Config;
-import net.osomahe.config.entity.ConfigDefaultValue;
-import net.osomahe.config.entity.ConfigName;
 import net.osomahe.esk.entity.AbstractEvent;
 
 
@@ -26,12 +24,8 @@ import net.osomahe.esk.entity.AbstractEvent;
 @Stateless
 public class KafkaProducerFactory {
 
-    private KafkaProducer<String, AbstractEvent> kafkaProducer;
-
     @Inject
-    @Config
-    @ConfigName("event-store.kafka-url")
-    @ConfigDefaultValue("localhost:9092")
+    @Config(value = "event-store.kafka-url", defaultValue = "localhost:9092")
     private String kafkaServer;
 
 
