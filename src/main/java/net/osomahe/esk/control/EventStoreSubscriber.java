@@ -44,10 +44,6 @@ public class EventStoreSubscriber {
     private String groupId;
 
     @Inject
-    @Config(value = "event-store.subscriber.client-id", defaultValue = "default-client")
-    private String clientId;
-
-    @Inject
     @Config(value = "event-store.subscriber.topics", defaultValue = "default-topic")
     private String topicName;
 
@@ -77,7 +73,7 @@ public class EventStoreSubscriber {
         Properties props = new Properties();
         props.put(BOOTSTRAP_SERVERS_CONFIG, this.kafkaServer);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, this.groupId);
-        props.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId != null ? clientId : UUID.randomUUID().toString());
+        props.put(ConsumerConfig.CLIENT_ID_CONFIG, UUID.randomUUID().toString());
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         this.consumer = new KafkaConsumer<>(props, new StringDeserializer(), new EventDeserializer(eventNameMapper));
