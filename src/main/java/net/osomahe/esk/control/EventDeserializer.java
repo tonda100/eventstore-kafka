@@ -14,6 +14,8 @@ import org.apache.kafka.common.serialization.Deserializer;
 
 
 /**
+ * Deserialize the raw data from Kafka to {@link JsonObject}
+ *
  * @author Antonin Stoklasek
  */
 public class EventDeserializer implements Deserializer<JsonObject> {

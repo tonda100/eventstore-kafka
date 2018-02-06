@@ -15,6 +15,8 @@ import net.osomahe.esk.entity.EventName;
 
 
 /**
+ * Serialize given {@link AbstractEvent} to {@link JsonObject} and to the utf-8 byte array.
+ *
  * @author Antonin Stoklasek
  */
 public class EventSerializer implements Serializer<AbstractEvent> {

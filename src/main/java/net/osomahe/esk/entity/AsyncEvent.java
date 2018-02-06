@@ -8,6 +8,8 @@ import java.lang.annotation.Target;
 
 
 /**
+ * Annotation to mark event class that it supposed to be processed asynchronously.
+ *
  * @author Antonin Stoklasek
  */
 @Documented

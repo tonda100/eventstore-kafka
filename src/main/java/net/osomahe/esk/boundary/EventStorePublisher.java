@@ -17,6 +17,8 @@ import net.osomahe.esk.entity.AbstractEvent;
 
 
 /**
+ * Provides publishing to Kafka topics.
+ *
  * @author Antonin Stoklasek
  */
 @Stateless
@@ -28,6 +30,12 @@ public class EventStorePublisher {
     @Inject
     private TopicService topicService;
 
+    /**
+     * Publishes the given event to the Kafka topic.
+     *
+     * @param event event to be published
+     * @param <T> event supposed to extend {@link AbstractEvent}
+     */
     public <T extends AbstractEvent> void publish(T event) {
         fillMetadata(event);
         int partition = getPartition(event);
@@ -39,6 +47,13 @@ public class EventStorePublisher {
         this.kafkaProducer.send(record);
     }
 
+    /**
+     * Parses the aggregateId of an event a takes part after las '-' which is partition number.
+     *
+     * @param event event whose partition number should be returned
+     * @param <T>
+     * @return partition number of given event
+     */
     private <T extends AbstractEvent> int getPartition(T event) {
         if (event.getAggregateId().contains("-")) {
             String lastPart = event.getAggregateId().substring(event.getAggregateId().lastIndexOf('-') + 1);
@@ -47,6 +62,13 @@ public class EventStorePublisher {
         throw new IllegalArgumentException("Event aggregateId does NOT contain info about partition number. event: " + event);
     }
 
+    /**
+     * Fills necessary metadata of given event to be successfully published.
+     * It fills aggregateId in format UUID-epochMillis-partitionNumber and dateTime with current value.
+     *
+     * @param event
+     * @param <T>
+     */
     private <T extends AbstractEvent> void fillMetadata(T event) {
         if (event.getAggregateId() == null) {
             int partitionCount = topicService.getPartitionCount(event.getClass());

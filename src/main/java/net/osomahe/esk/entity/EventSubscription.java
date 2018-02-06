@@ -1,13 +1,15 @@
 package net.osomahe.esk.entity;
 
 /**
+ * Event class used to subscribe for specific event in Kafka.
+ *
  * @author Antonin Stoklasek
  */
-public class EventSubscribeEvent {
+public class EventSubscription {
 
     private final Class<? extends AbstractEvent> eventClass;
 
-    public EventSubscribeEvent(Class<? extends AbstractEvent> eventClass) {
+    public EventSubscription(Class<? extends AbstractEvent> eventClass) {
         this.eventClass = eventClass;
     }
 
@@ -17,7 +19,7 @@ public class EventSubscribeEvent {
 
     @Override
     public String toString() {
-        return "EventSubscribeEvent{" +
+        return "EventSubscription{" +
                 "eventClass=" + eventClass +
                 '}';
     }

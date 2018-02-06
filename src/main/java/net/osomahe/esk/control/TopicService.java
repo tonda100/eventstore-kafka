@@ -22,6 +22,11 @@ import net.osomahe.esk.entity.AbstractEvent;
 import net.osomahe.esk.entity.TopicName;
 
 
+/**
+ * Provides operations with kafka topics.
+ *
+ * @author Antonin Stoklasek
+ */
 @Singleton
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class TopicService {
@@ -35,6 +40,12 @@ public class TopicService {
     @Config(value = "event-store.default-topic", defaultValue = "application-topic")
     private String defaultTopic;
 
+    /**
+     * Provides topic name for given {@link AbstractEvent}.
+     *
+     * @param eventClass event for which the topic name is requested
+     * @return topic name
+     */
     public String getTopicName(Class<? extends AbstractEvent> eventClass) {
         TopicName topicName = eventClass.getAnnotation(TopicName.class);
         if (topicName == null) {
@@ -43,10 +54,22 @@ public class TopicService {
         return topicName.value();
     }
 
+    /**
+     * Provides how many partitions does topic for given event have.
+     *
+     * @param eventClass
+     * @return number of topic's partitions
+     */
     public int getPartitionCount(Class<? extends AbstractEvent> eventClass) {
         return getPartitionCount(getTopicName(eventClass));
     }
 
+    /**
+     * Provides how many partitions does given topic.
+     *
+     * @param topicName
+     * @return number of topic's partitions
+     */
     public synchronized int getPartitionCount(String topicName) {
         if (mapPartitionCount.containsKey(topicName)) {
             return mapPartitionCount.get(topicName);

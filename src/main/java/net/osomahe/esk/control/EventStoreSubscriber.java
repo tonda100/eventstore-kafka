@@ -34,11 +34,13 @@ import net.osomahe.esk.entity.EventName;
 
 
 /**
+ * Handles subscription to correct Kafka topics and fires correct events which are observed.
+ *
  * @author Antonin Stoklasek
  */
 @Singleton
 @Startup
-public class EventSubscriber {
+public class EventStoreSubscriber {
 
     @Inject
     @Config(value = "event-store.kafka-urls", defaultValue = "localhost:9092")
@@ -48,24 +50,22 @@ public class EventSubscriber {
     @Config(value = "event-store.application-id", defaultValue = "client-application")
     private String applicationId;
 
-
-    private KafkaConsumer<String, JsonObject> consumer;
-
-
-    private Map<String, Map<String, Class<? extends AbstractEvent>>> mapTopics = new ConcurrentHashMap<>();
-
-    private Jsonb jsonb;
-
     @Inject
     private TopicService topicService;
 
     @Inject
     private Event<AbstractEvent> events;
 
-    private ScheduledFuture<?> sfConsumerPoll;
-
     @Resource
     private ManagedScheduledExecutorService mses;
+
+    private Map<String, Map<String, Class<? extends AbstractEvent>>> mapTopics = new ConcurrentHashMap<>();
+
+    private Jsonb jsonb;
+
+    private KafkaConsumer<String, JsonObject> consumer;
+
+    private ScheduledFuture<?> sfConsumerPoll;
 
 
     @PostConstruct
@@ -80,7 +80,11 @@ public class EventSubscriber {
         this.sfConsumerPoll = this.mses.scheduleAtFixedRate(this::pollMessages, 1_000, 100, TimeUnit.MILLISECONDS);
     }
 
-
+    /**
+     * Subscribes to kafka for given event.
+     *
+     * @param eventClass event which should be consumed from Kafka and fired to outside world
+     */
     public void subscribeForTopic(Class<? extends AbstractEvent> eventClass) {
         String topicName = topicService.getTopicName(eventClass);
         synchronized (this.consumer) {
@@ -92,6 +96,12 @@ public class EventSubscriber {
         }
     }
 
+    /**
+     * Provides event name from event class.
+     *
+     * @param eventClass event class for which the event name will be returned
+     * @return event name
+     */
     private String getEventName(Class<? extends AbstractEvent> eventClass) {
         EventName eventName = eventClass.getAnnotation(EventName.class);
         if (eventName != null) {
@@ -100,6 +110,9 @@ public class EventSubscriber {
         return eventClass.getSimpleName();
     }
 
+    /**
+     * Polling the messages from subscribed topics and fires the event further.
+     */
     private void pollMessages() {
         synchronized (this.consumer) {
             if (mapTopics.isEmpty()) {

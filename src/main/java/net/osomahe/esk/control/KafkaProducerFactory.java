@@ -19,6 +19,8 @@ import net.osomahe.esk.entity.AbstractEvent;
 
 
 /**
+ * Produces {@link KafkaProducer} instances.
+ *
  * @author Antonin Stoklasek
  */
 @Stateless
@@ -29,6 +31,11 @@ public class KafkaProducerFactory {
     private String kafkaServer;
 
 
+    /**
+     * Produces {@link KafkaProducer} according to given configuration.
+     *
+     * @return KafkaProducer instance
+     */
     @Produces
     public KafkaProducer<String, AbstractEvent> getKafkaProducer() {
         Properties props = new Properties();

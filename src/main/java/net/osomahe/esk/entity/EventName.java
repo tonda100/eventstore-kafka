@@ -8,6 +8,8 @@ import java.lang.annotation.Target;
 
 
 /**
+ * Annotation to force own event name otherwise it will be derived from event class name.
+ *
  * @author Antonin Stoklasek
  */
 @Documented
