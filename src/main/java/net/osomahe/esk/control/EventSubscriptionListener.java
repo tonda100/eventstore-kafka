@@ -27,7 +27,7 @@ public class EventSubscriptionListener {
     /**
      * Observes for {@link EventSubscription}
      *
-     * @param event
+     * @param event event which will be the application subscribed for
      */
     public void subscribeForEvent(@Observes EventSubscription event) {
         mses.schedule(() -> subscriber.get().subscribeForTopic(event.getEventClass()), 1, TimeUnit.SECONDS);

@@ -38,8 +38,8 @@ public class EventStoreExtension implements Extension {
     /**
      * After deployment method which fires events, what event should the subscription happened.
      *
-     * @param afterDeploymentValidation
-     * @param beanManager
+     * @param afterDeploymentValidation hook for after deployment validation stage
+     * @param beanManager bean manger
      */
     public void afterDeploymentValidation(@Observes final AfterDeploymentValidation afterDeploymentValidation, final BeanManager beanManager) {
         events.forEach(eventClass -> {

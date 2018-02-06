@@ -57,7 +57,7 @@ public class TopicService {
     /**
      * Provides how many partitions does topic for given event have.
      *
-     * @param eventClass
+     * @param eventClass class of the event
      * @return number of topic's partitions
      */
     public int getPartitionCount(Class<? extends AbstractEvent> eventClass) {
@@ -67,7 +67,7 @@ public class TopicService {
     /**
      * Provides how many partitions does given topic.
      *
-     * @param topicName
+     * @param topicName name of the topic
      * @return number of topic's partitions
      */
     public synchronized int getPartitionCount(String topicName) {
