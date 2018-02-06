@@ -1,5 +1,8 @@
 package net.osomahe.esk.boundary;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PreDestroy;
@@ -8,8 +11,8 @@ import javax.inject.Inject;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.tamaya.inject.api.Config;
 
+import net.osomahe.esk.control.TopicService;
 import net.osomahe.esk.entity.AbstractEvent;
 
 
@@ -20,19 +23,19 @@ import net.osomahe.esk.entity.AbstractEvent;
 public class EventStorePublisher {
 
     @Inject
-    @Config(value = "event-store.publisher.default-topic", defaultValue = "default-topic")
-    private String topicName;
-
-    @Inject
     private KafkaProducer<String, AbstractEvent> kafkaProducer;
 
-    public <T extends AbstractEvent> void publish(T event) {
-        publish(event, topicName);
-    }
+    @Inject
+    private TopicService topicService;
 
-    public <T extends AbstractEvent> void publish(T event, String topicName) {
+    public <T extends AbstractEvent> void publish(T event) {
+        fillMetadata(event);
         int partition = getPartition(event);
-        ProducerRecord<String, AbstractEvent> record = new ProducerRecord<>(topicName, partition, event.getAggregateId(), event);
+        ProducerRecord<String, AbstractEvent> record = new ProducerRecord<>(
+                topicService.getTopicName(event.getClass()),
+                partition,
+                event.getAggregateId(),
+                event);
         this.kafkaProducer.send(record);
     }
 
@@ -42,6 +45,19 @@ public class EventStorePublisher {
             return Integer.parseInt(lastPart);
         }
         throw new IllegalArgumentException("Event aggregateId does NOT contain info about partition number. event: " + event);
+    }
+
+    private <T extends AbstractEvent> void fillMetadata(T event) {
+        if (event.getAggregateId() == null) {
+            int partitionCount = topicService.getPartitionCount(event.getClass());
+            String uuid = UUID.randomUUID().toString();
+            int partition = Math.abs(uuid.hashCode()) % partitionCount;
+            String aggregateId = String.format("%s-%s-%s", uuid, System.currentTimeMillis(), partition);
+            event.setAggregateId(aggregateId);
+        }
+        if (event.getDateTime() == null) {
+            event.setDateTime(ZonedDateTime.now(ZoneOffset.UTC));
+        }
     }
 
     @PreDestroy

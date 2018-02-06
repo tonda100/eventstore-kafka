@@ -25,7 +25,7 @@ import net.osomahe.esk.entity.AbstractEvent;
 public class KafkaProducerFactory {
 
     @Inject
-    @Config(value = "event-store.kafka-url", defaultValue = "localhost:9092")
+    @Config(value = "event-store.kafka-urls", defaultValue = "localhost:9092")
     private String kafkaServer;
 
 
