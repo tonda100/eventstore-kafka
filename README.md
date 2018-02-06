@@ -45,4 +45,21 @@ public void newCredentials(@Observes CredentialsCreatedEvent event) {
 }
 ```
 
+## Advanced
+Configuration possibilities and default values.
+### Configuration
+Configuration is done via Apache Tamaya project e.g. `src/main/resources/META-INF/javaconfiguration.properties`
+```properties
+# urls of Apache Kafka cluster nodes. Default value 'localhost:9092'
+event-store.kafka-urls=hostname1:9092,hostname2:9092
 
+# name of your application used as kafka group.id instances of same application are using same application id. Default value 'client-application'
+event-store.application-id=your-application
+
+# name of default topic. Default value 'application-topic'
+event-store.default-topic=my-topic
+```
+### Customization
+* `@TopicName` annotation for an event class to set different topic for given event(s)
+* `@EventName` annotation for an event class to set different event name
+* `@AsyncEvent` annotation for an event class to set asynchronous processing of events `@ObeservesAsync` required for handling async events
