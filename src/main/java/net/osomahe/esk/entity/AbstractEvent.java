@@ -1,8 +1,12 @@
 package net.osomahe.esk.entity;
 
+import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+
+import javax.json.bind.annotation.JsonbTransient;
 
 
 /**
@@ -12,6 +16,8 @@ import java.util.UUID;
  * @since 0.3
  */
 public abstract class AbstractEvent {
+
+    private static final Duration DEFAULT_VALIDITY = Duration.of(1024, ChronoUnit.YEARS);
 
     private static final int PARTITION_COUNT = 128;
 
@@ -50,6 +56,16 @@ public abstract class AbstractEvent {
 
     public void setDateTime(ZonedDateTime dateTime) {
         this.dateTime = dateTime;
+    }
+
+    @JsonbTransient
+    public boolean isValid() {
+        return this.dateTime.plus(getValidity()).isAfter(ZonedDateTime.now());
+    }
+
+    @JsonbTransient
+    public Duration getValidity() {
+        return DEFAULT_VALIDITY;
     }
 
     @Override

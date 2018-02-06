@@ -2,6 +2,7 @@ package net.osomahe.esk.control;
 
 import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -91,12 +92,14 @@ public class EventStoreSubscriber {
     private void pollMessages() {
         synchronized (this.consumer) {
             ConsumerRecords<String, AbstractEvent> records = consumer.poll(100);
+            ZonedDateTime now = ZonedDateTime.now();
             for (ConsumerRecord<String, AbstractEvent> rcd : records) {
-                if (rcd.value() != null) {
-                    if (rcd.value().getClass().isAnnotationPresent(AsyncEvent.class)) {
-                        this.event.fireAsync(rcd.value());
+                AbstractEvent event = rcd.value();
+                if (event != null && event.isValid()) {
+                    if (event.getClass().isAnnotationPresent(AsyncEvent.class)) {
+                        this.event.fireAsync(event);
                     } else {
-                        this.event.fire(rcd.value());
+                        this.event.fire(event);
                     }
                 }
             }
