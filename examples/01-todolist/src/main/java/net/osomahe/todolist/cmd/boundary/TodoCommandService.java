@@ -1,5 +1,6 @@
 package net.osomahe.todolist.cmd.boundary;
 
+import javax.ejb.Stateless;
 import javax.inject.Inject;
 
 import net.osomahe.esk.boundary.EventStorePublisher;
@@ -12,6 +13,7 @@ import net.osomahe.todolist.cmd.entity.TodoInfo;
 /**
  * @author Antonin Stoklasek
  */
+@Stateless
 public class TodoCommandService {
 
     @Inject
