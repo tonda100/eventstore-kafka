@@ -51,6 +51,9 @@ public class EventStoreSubscriber {
     private String applicationId;
 
     @Inject
+    private EventSubscriptionDataStore eventDataStore;
+
+    @Inject
     private TopicService topicService;
 
     @Inject
@@ -59,6 +62,7 @@ public class EventStoreSubscriber {
     @Resource
     private ManagedScheduledExecutorService mses;
 
+    // map of topics used to find out what event should be fired for the application
     private Map<String, Map<String, Class<? extends AbstractEvent>>> mapTopics = new ConcurrentHashMap<>();
 
     private Jsonb jsonb;
@@ -72,12 +76,17 @@ public class EventStoreSubscriber {
     public void init() {
         this.jsonb = JsonbBuilder.create();
 
-        Properties props = new Properties();
-        props.put(BOOTSTRAP_SERVERS_CONFIG, kafkaServer);
-        props.put(GROUP_ID_CONFIG, applicationId);
-        props.put(AUTO_OFFSET_RESET_CONFIG, "earliest");
-        this.consumer = new KafkaConsumer<>(props, new StringDeserializer(), new EventDeserializer());
-        this.sfConsumerPoll = this.mses.scheduleAtFixedRate(this::pollMessages, 1_000, 100, TimeUnit.MILLISECONDS);
+        eventDataStore.getEventClasses().forEach(this::subscribeForTopic);
+        if (mapTopics.size() > 0) {
+            Properties props = new Properties();
+            props.put(BOOTSTRAP_SERVERS_CONFIG, kafkaServer);
+            props.put(GROUP_ID_CONFIG, applicationId);
+            props.put(AUTO_OFFSET_RESET_CONFIG, "earliest");
+            this.consumer = new KafkaConsumer<>(props, new StringDeserializer(), new EventDeserializer());
+
+            consumer.subscribe(mapTopics.keySet());
+            this.sfConsumerPoll = this.mses.scheduleAtFixedRate(this::pollMessages, 1_000, 100, TimeUnit.MILLISECONDS);
+        }
     }
 
     /**
@@ -85,15 +94,12 @@ public class EventStoreSubscriber {
      *
      * @param eventClass event which should be consumed from Kafka and fired to outside world
      */
-    public void subscribeForTopic(Class<? extends AbstractEvent> eventClass) {
+    private void subscribeForTopic(Class<? extends AbstractEvent> eventClass) {
         String topicName = topicService.getTopicName(eventClass);
-        synchronized (this.consumer) {
-            if (!mapTopics.containsKey(topicName)) {
-                mapTopics.put(topicName, new ConcurrentHashMap<>());
-                consumer.subscribe(mapTopics.keySet());
-            }
-            mapTopics.get(topicName).put(getEventName(eventClass), eventClass);
+        if (!mapTopics.containsKey(topicName)) {
+            mapTopics.put(topicName, new ConcurrentHashMap<>());
         }
+        mapTopics.get(topicName).put(getEventName(eventClass), eventClass);
     }
 
     /**
@@ -115,9 +121,6 @@ public class EventStoreSubscriber {
      */
     private void pollMessages() {
         synchronized (this.consumer) {
-            if (mapTopics.isEmpty()) {
-                return;
-            }
             ConsumerRecords<String, JsonObject> records = consumer.poll(100);
             for (ConsumerRecord<String, JsonObject> rcd : records) {
                 JsonObject event = rcd.value();
@@ -138,8 +141,11 @@ public class EventStoreSubscriber {
 
     @PreDestroy
     public void destroy() {
-        synchronized (this.consumer) {
-            this.sfConsumerPoll.cancel(false);
+        if (this.sfConsumerPoll != null) {
+            synchronized (this.consumer) {
+                this.sfConsumerPoll.cancel(false);
+                this.consumer.close(5, TimeUnit.SECONDS);
+            }
         }
     }
 }

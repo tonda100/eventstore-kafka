@@ -1,5 +1,5 @@
 # Event Store Kafka
-CDI extension for Java EE 8 application using Apache Kafka as Event Store with 
+CDI extension for Java EE 8 application using [Apache Kafka](https://kafka.apache.org/) as Event Store with 
 [Apache Tamaya](http://tamaya.incubator.apache.org/) used for configuration.
 
 [![Build Status](https://travis-ci.org/tonda100/eventstore-kafka.svg?branch=dev)](https://travis-ci.org/tonda100/eventstore-kafka)
@@ -13,7 +13,7 @@ How to quickly start using the Event Store Kafka with your Java EE 8 project.
 <dependency>
     <groupId>net.osomahe</groupId>
     <artifactId>eventstore-kafka</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 <dependency>
     <groupId>org.apache.tamaya</groupId>
