@@ -8,17 +8,17 @@ CDI extension for Java EE 8 application using [Apache Kafka](https://kafka.apach
 How to quickly start using the Event Store Kafka with your Java EE 8 project.
 ### Setup
 1. Add maven dependencies to your pom.xml
-```xml
-<dependency>
-    <groupId>net.osomahe</groupId>
-    <artifactId>eventstore-kafka</artifactId>
-    <version>0.2.0</version>
-</dependency>
-```
+    ```xml
+    <dependency>
+        <groupId>net.osomahe</groupId>
+        <artifactId>eventstore-kafka</artifactId>
+        <version>0.2.0</version>
+    </dependency>
+    ```
 2. Added extensions `src/main/resources/META-INF/services/javax.enterprise.inject.spi.Extension`
-```text
-net.osomahe.esk.EventStoreExtension
-```
+    ```text
+    net.osomahe.esk.EventStoreExtension
+    ```
 
 ### Producing events
 1. Extend `AbstractEvent` class
@@ -27,11 +27,11 @@ net.osomahe.esk.EventStoreExtension
 ### Consuming events
 1. Extend `AbstractEvent` class or use the same as for publishing.
 2. Observes for CDI event
-```java
-public void handleCreate(@Observes TodoCreatedEvent event) {
-    // do some magic with event
-}
-```
+    ```java
+    public void handleCreate(@Observes TodoCreatedEvent event) {
+        // do some magic with event
+    }
+    ```
 
 ## Advanced
 Configuration possibilities and default values.
@@ -45,14 +45,13 @@ default values will be in place.
     props.put(BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
     props.put(ACKS_CONFIG, "all");
     ```
-  * `java.util.Properties` with qualifiers `@KafkaConsumerConfig` for overriding consumer properties otherwise
-default values will be in place.
-```java
-Properties props = new Properties();
-props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-props.put(GROUP_ID_CONFIG, "client-application");
-props.put(AUTO_OFFSET_RESET_CONFIG, "earliest");
-```
+  * `java.util.Properties` with qualifiers `@KafkaConsumerConfig` for overriding consumer properties otherwise default values will be in place.
+    ```java
+    Properties props = new Properties();
+    props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    props.put(GROUP_ID_CONFIG, "client-application");
+    props.put(AUTO_OFFSET_RESET_CONFIG, "earliest");
+    ```
 2. Application has to implement `EventStorePublisherConfig` and (or) `EventStoreConsumerConfig` to provide non-default properties
 
 ### Customization
