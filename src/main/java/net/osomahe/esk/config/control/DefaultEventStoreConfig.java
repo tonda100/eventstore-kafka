@@ -1,9 +1,9 @@
 package net.osomahe.esk.config.control;
 
+import static org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.ACKS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
 
 import java.util.Properties;
 
@@ -42,10 +42,11 @@ public class DefaultEventStoreConfig implements EventStorePublisherConfig, Event
 
     @Override
     public Properties getKafkaProducerConfig() {
+        Properties producerConfig = getDefaultProducerConfig();
         if (instanceProducer.isResolvable()) {
-            return instanceProducer.get();
+            producerConfig.putAll(instanceProducer.get());
         }
-        return getDefaultProducerConfig();
+        return producerConfig;
     }
 
     private Properties getDefaultProducerConfig() {
@@ -57,10 +58,11 @@ public class DefaultEventStoreConfig implements EventStorePublisherConfig, Event
 
     @Override
     public Properties getKafkaConsumerConfig() {
-        if (instanceProducer.isResolvable()) {
-            return instanceProducer.get();
+        Properties consumerConfig = getDefaultConsumerConfig();
+        if (instanceConsumer.isResolvable()) {
+            consumerConfig.putAll(instanceConsumer.get());
         }
-        return getDefaultConsumerConfig();
+        return consumerConfig;
     }
 
     private Properties getDefaultConsumerConfig() {

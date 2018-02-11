@@ -3,7 +3,11 @@ package net.osomahe.esk.eventstore.boundary;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.annotation.PreDestroy;
 import javax.ejb.Stateless;
@@ -11,9 +15,12 @@ import javax.inject.Inject;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 
 import net.osomahe.esk.eventstore.control.TopicService;
 import net.osomahe.esk.eventstore.entity.AbstractEvent;
+import net.osomahe.esk.eventstore.entity.EventNotPublishedException;
+import net.osomahe.esk.eventstore.entity.EventStoreException;
 
 
 /**
@@ -24,6 +31,8 @@ import net.osomahe.esk.eventstore.entity.AbstractEvent;
 @Stateless
 public class EventStorePublisher {
 
+    private static final Logger logger = Logger.getLogger(EventStorePublisher.class.getName());
+
     @Inject
     private KafkaProducer<String, AbstractEvent> kafkaProducer;
 
@@ -31,12 +40,33 @@ public class EventStorePublisher {
     private TopicService topicService;
 
     /**
-     * Publishes the given event to the Kafka topic.
+     * Publishes the given event to the Kafka topic synchronously.
      *
-     * @param event event to be published
      * @param <T> event supposed to extend {@link AbstractEvent}
+     * @param event event to be published
+     * @return metadata about the record
+     * @throws EventNotPublishedException when publish of event failed this runtime exception is thrown
      */
-    public <T extends AbstractEvent> void publish(T event) {
+    public <T extends AbstractEvent> RecordMetadata publish(T event) {
+        try {
+            RecordMetadata metadata = publishAsync(event).get();
+            if (metadata == null) {
+                throw new EventNotPublishedException(event);
+            }
+            return metadata;
+        } catch (InterruptedException | ExecutionException e) {
+            throw new EventStoreException("Cannot publish the event: " + event, e);
+        }
+    }
+
+    /**
+     * Publishes the given event to the Kafka topic asynchronously.
+     *
+     * @param <T> event supposed to extend {@link AbstractEvent}
+     * @param event event to be published
+     * @return Future of record metadata
+     */
+    public <T extends AbstractEvent> CompletableFuture<RecordMetadata> publishAsync(T event) {
         fillMetadata(event);
         int partition = getPartition(event);
         ProducerRecord<String, AbstractEvent> record = new ProducerRecord<>(
@@ -44,7 +74,17 @@ public class EventStorePublisher {
                 partition,
                 event.getAggregateId(),
                 event);
-        this.kafkaProducer.send(record);
+        CompletableFuture<RecordMetadata> futureMetadata = CompletableFuture.supplyAsync(() -> {
+            try {
+                return this.kafkaProducer.send(record).get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new EventStoreException("Cannot publish the event: " + event, e);
+            }
+        }).exceptionally(throwable -> {
+            logger.log(Level.SEVERE, "Event was NOT published", throwable);
+            return null;
+        });
+        return futureMetadata;
     }
 
     /**

@@ -22,7 +22,8 @@ How to quickly start using the Event Store Kafka with your Java EE 8 project.
 
 ### Producing events
 1. Extend `AbstractEvent` class
-2. Use `EventStorePublisher#publish(event)` method for publishing event to Apache Kafka.
+2. Use `EventStorePublisher#publish(event)` method for publishing event to Apache Kafka synchronously.
+3. Use `EventStorePublisher#publishAsync(event)` method for publishing event to Apache Kafka asynchronously.
 
 ### Consuming events
 1. Extend `AbstractEvent` class or use the same as for publishing.
@@ -34,9 +35,10 @@ How to quickly start using the Event Store Kafka with your Java EE 8 project.
     ```
 
 ## Advanced
-Configuration possibilities and default values.
+Configuration possibilities and default values. Unfortunately JavaEE 8 does not have any standard means of configuration and
+I didn't want to  
 ### Configuration
-There are two ways of configuration.
+Unfortunately JavaEE 8 does not provide any standard way. There are two ways of configuring the eventstore-kafka.
 1. Application has to produce using `@javax.enterprise.inject.Produces`:
   * `java.util.Properties` with qualifiers `@KafkaProducerConfig` for overriding producer properties otherwise
 default values will be in place.
