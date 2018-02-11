@@ -1,7 +1,7 @@
 package net.osomahe.esk.eventstore.entity;
 
 /**
- * TODO write JavaDoc
+ * Exception of event store.
  *
  * @author Antonin Stoklasek
  */

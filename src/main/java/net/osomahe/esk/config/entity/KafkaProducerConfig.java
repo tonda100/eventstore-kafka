@@ -10,7 +10,8 @@ import javax.inject.Qualifier;
 
 
 /**
- * TODO write JavaDoc
+ * Qualifier annotation to provide custom properties for the event store producer configuration.
+ * The default values will be replaced by the provided values.
  *
  * @author Antonin Stoklasek
  */

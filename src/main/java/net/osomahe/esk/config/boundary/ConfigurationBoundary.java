@@ -18,7 +18,7 @@ import net.osomahe.esk.config.entity.KafkaProducerConfig;
 
 
 /**
- * TODO write JavaDoc
+ * Provides configuration for event store publisher and subscriber.
  *
  * @author Antonin Stoklasek
  */
@@ -44,6 +44,11 @@ public class ConfigurationBoundary {
     private Instance<EventStoreSubscriberConfig> instanceSubscriber;
 
 
+    /**
+     * Provides configuration properties for kafka producer.
+     *
+     * @return properties for configuration.
+     */
     public Properties getKafkaProducerConfig() {
         if (instancePublisher.isResolvable()) {
             return instancePublisher.get().getKafkaProducerConfig();
@@ -62,6 +67,11 @@ public class ConfigurationBoundary {
         return props;
     }
 
+    /**
+     * Provides configuration properties for kafka consumer.
+     *
+     * @return properties for configuration.
+     */
     public Properties getKafkaConsumerConfig() {
         if (instanceSubscriber.isResolvable()) {
             return instanceSubscriber.get().getKafkaConsumerConfig();

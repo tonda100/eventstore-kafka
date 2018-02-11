@@ -1,7 +1,7 @@
 package net.osomahe.esk.eventstore.entity;
 
 /**
- * TODO write JavaDoc
+ * Exception when publishing of an event failed.
  *
  * @author Antonin Stoklasek
  */
