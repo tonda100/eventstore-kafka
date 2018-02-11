@@ -1,4 +1,4 @@
-package net.osomahe.esk.config.control;
+package net.osomahe.esk.config.boundary;
 
 import static org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
@@ -13,19 +13,17 @@ import javax.inject.Inject;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 
-import net.osomahe.esk.config.boundary.EventStorePublisherConfig;
-import net.osomahe.esk.config.boundary.EventStoreSubscriberConfig;
 import net.osomahe.esk.config.entity.KafkaConsumerConfig;
 import net.osomahe.esk.config.entity.KafkaProducerConfig;
 
 
 /**
- * This
+ * TODO write JavaDoc
  *
  * @author Antonin Stoklasek
  */
 @Stateless
-public class DefaultEventStoreConfig implements EventStorePublisherConfig, EventStoreSubscriberConfig {
+public class ConfigurationBoundary {
 
     private static final String DEFAULT_KAFKA_URL = "localhost:9092";
 
@@ -39,9 +37,17 @@ public class DefaultEventStoreConfig implements EventStorePublisherConfig, Event
     @KafkaConsumerConfig
     private Instance<Properties> instanceConsumer;
 
+    @Inject
+    private Instance<EventStorePublisherConfig> instancePublisher;
 
-    @Override
+    @Inject
+    private Instance<EventStoreSubscriberConfig> instanceSubscriber;
+
+
     public Properties getKafkaProducerConfig() {
+        if (instancePublisher.isResolvable()) {
+            return instancePublisher.get().getKafkaProducerConfig();
+        }
         Properties producerConfig = getDefaultProducerConfig();
         if (instanceProducer.isResolvable()) {
             producerConfig.putAll(instanceProducer.get());
@@ -56,8 +62,10 @@ public class DefaultEventStoreConfig implements EventStorePublisherConfig, Event
         return props;
     }
 
-    @Override
     public Properties getKafkaConsumerConfig() {
+        if (instanceSubscriber.isResolvable()) {
+            return instanceSubscriber.get().getKafkaConsumerConfig();
+        }
         Properties consumerConfig = getDefaultConsumerConfig();
         if (instanceConsumer.isResolvable()) {
             consumerConfig.putAll(instanceConsumer.get());

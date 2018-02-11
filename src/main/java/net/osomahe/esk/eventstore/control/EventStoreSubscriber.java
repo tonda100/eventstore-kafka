@@ -22,7 +22,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
-import net.osomahe.esk.config.boundary.EventStoreSubscriberConfig;
+import net.osomahe.esk.config.boundary.ConfigurationBoundary;
 import net.osomahe.esk.eventstore.entity.AbstractEvent;
 import net.osomahe.esk.eventstore.entity.AsyncEvent;
 import net.osomahe.esk.eventstore.entity.EventName;
@@ -38,7 +38,7 @@ import net.osomahe.esk.eventstore.entity.EventName;
 public class EventStoreSubscriber {
 
     @Inject
-    private EventStoreSubscriberConfig config;
+    private ConfigurationBoundary config;
 
     @Inject
     private EventSubscriptionDataStore eventDataStore;

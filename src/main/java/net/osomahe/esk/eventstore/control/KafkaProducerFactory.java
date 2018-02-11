@@ -12,7 +12,7 @@ import javax.inject.Inject;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
-import net.osomahe.esk.config.boundary.EventStorePublisherConfig;
+import net.osomahe.esk.config.boundary.ConfigurationBoundary;
 import net.osomahe.esk.eventstore.entity.AbstractEvent;
 
 
@@ -25,7 +25,7 @@ import net.osomahe.esk.eventstore.entity.AbstractEvent;
 public class KafkaProducerFactory {
 
     @Inject
-    private EventStorePublisherConfig config;
+    private ConfigurationBoundary config;
 
     /**
      * Produces {@link KafkaProducer} according to given configuration.

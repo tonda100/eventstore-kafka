@@ -1,0 +1,2 @@
+org.apache.tamaya.cdi.TamayaCDIInjectionExtension
+net.osomahe.esk.EventStoreExtension
