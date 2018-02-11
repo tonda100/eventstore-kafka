@@ -1,4 +1,4 @@
-package net.osomahe.esk.entity;
+package net.osomahe.esk.eventstore.entity;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -8,12 +8,14 @@ import java.lang.annotation.Target;
 
 
 /**
- * Annotation to mark event class that it supposed to be processed asynchronously.
+ * Annotation to force own event name otherwise it will be derived from event class name.
  *
  * @author Antonin Stoklasek
  */
 @Documented
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AsyncEvent {
+public @interface EventName {
+
+    String value();
 }

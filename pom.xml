@@ -44,15 +44,6 @@
             <artifactId>kafka-clients</artifactId>
             <version>1.0.0</version>
         </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.apache.tamaya.ext/tamaya-injection-api -->
-        <dependency>
-            <groupId>org.apache.tamaya.ext</groupId>
-            <artifactId>tamaya-injection-api</artifactId>
-            <version>0.3-incubating</version>
-            <scope>provided</scope>
-        </dependency>
-
     </dependencies>
 
 

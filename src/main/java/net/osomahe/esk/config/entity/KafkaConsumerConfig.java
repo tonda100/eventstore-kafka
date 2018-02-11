@@ -1,4 +1,4 @@
-package net.osomahe.esk.entity;
+package net.osomahe.esk.config.entity;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -6,16 +6,18 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import javax.inject.Qualifier;
+
 
 /**
- * Annotation to force own event name otherwise it will be derived from event class name.
+ * TODO write JavaDoc
  *
  * @author Antonin Stoklasek
  */
 @Documented
-@Target(ElementType.TYPE)
+@Qualifier
 @Retention(RetentionPolicy.RUNTIME)
-public @interface EventName {
+@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
+public @interface KafkaConsumerConfig {
 
-    String value();
 }

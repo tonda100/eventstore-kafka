@@ -10,8 +10,8 @@ import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.ProcessObserverMethod;
 
-import net.osomahe.esk.entity.AbstractEvent;
-import net.osomahe.esk.entity.EventSubscription;
+import net.osomahe.esk.eventstore.entity.AbstractEvent;
+import net.osomahe.esk.eventstore.entity.EventSubscription;
 
 
 /**

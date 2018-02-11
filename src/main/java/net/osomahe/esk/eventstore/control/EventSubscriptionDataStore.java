@@ -1,4 +1,4 @@
-package net.osomahe.esk.control;
+package net.osomahe.esk.eventstore.control;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -6,8 +6,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 
-import net.osomahe.esk.entity.AbstractEvent;
-import net.osomahe.esk.entity.EventSubscription;
+import net.osomahe.esk.eventstore.entity.AbstractEvent;
+import net.osomahe.esk.eventstore.entity.EventSubscription;
 
 
 /**

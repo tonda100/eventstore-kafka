@@ -1,4 +1,4 @@
-package net.osomahe.esk.control;
+package net.osomahe.esk.eventstore.control;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -10,8 +10,8 @@ import javax.json.bind.JsonbBuilder;
 
 import org.apache.kafka.common.serialization.Serializer;
 
-import net.osomahe.esk.entity.AbstractEvent;
-import net.osomahe.esk.entity.EventName;
+import net.osomahe.esk.eventstore.entity.AbstractEvent;
+import net.osomahe.esk.eventstore.entity.EventName;
 
 
 /**

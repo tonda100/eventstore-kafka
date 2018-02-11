@@ -1,4 +1,4 @@
-package net.osomahe.esk.boundary;
+package net.osomahe.esk.eventstore.boundary;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -12,8 +12,8 @@ import javax.inject.Inject;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
-import net.osomahe.esk.control.TopicService;
-import net.osomahe.esk.entity.AbstractEvent;
+import net.osomahe.esk.eventstore.control.TopicService;
+import net.osomahe.esk.eventstore.entity.AbstractEvent;
 
 
 /**

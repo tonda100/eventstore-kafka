@@ -1,4 +1,4 @@
-package net.osomahe.esk.entity;
+package net.osomahe.esk.eventstore.entity;
 
 /**
  * Event class used to subscribe for specific event in Kafka.

@@ -1,6 +1,5 @@
-package net.osomahe.esk.control;
+package net.osomahe.esk.eventstore.control;
 
-import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
 
@@ -16,10 +15,10 @@ import javax.inject.Inject;
 
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.tamaya.inject.api.Config;
 
-import net.osomahe.esk.entity.AbstractEvent;
-import net.osomahe.esk.entity.TopicName;
+import net.osomahe.esk.config.boundary.EventStoreSubscriberConfig;
+import net.osomahe.esk.eventstore.entity.AbstractEvent;
+import net.osomahe.esk.eventstore.entity.TopicName;
 
 
 /**
@@ -32,13 +31,10 @@ import net.osomahe.esk.entity.TopicName;
 public class TopicService {
     private final Map<String, Integer> mapPartitionCount = new ConcurrentHashMap<>();
 
-    @Inject
-    @Config(value = "event-store.kafka-urls", defaultValue = "localhost:9092")
-    private String kafkaServer;
+    private static final String DEFAULT_TOPIC = "eventstore";
 
     @Inject
-    @Config(value = "event-store.default-topic", defaultValue = "application-topic")
-    private String defaultTopic;
+    private EventStoreSubscriberConfig config;
 
     /**
      * Provides topic name for given {@link AbstractEvent}.
@@ -49,7 +45,7 @@ public class TopicService {
     public String getTopicName(Class<? extends AbstractEvent> eventClass) {
         TopicName topicName = eventClass.getAnnotation(TopicName.class);
         if (topicName == null) {
-            return defaultTopic;
+            return DEFAULT_TOPIC;
         }
         return topicName.value();
     }
@@ -80,8 +76,7 @@ public class TopicService {
     }
 
     private Integer loadPartitionCount(String topicName) {
-        Properties props = new Properties();
-        props.put(BOOTSTRAP_SERVERS_CONFIG, this.kafkaServer);
+        Properties props = this.config.getKafkaConsumerConfig();
         props.put(KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         props.put(VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         KafkaConsumer consumer = new KafkaConsumer(props);

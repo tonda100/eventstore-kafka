@@ -1,6 +1,6 @@
 package net.osomahe.todolist.cmd.entity;
 
-import net.osomahe.esk.entity.AbstractEvent;
+import net.osomahe.esk.eventstore.entity.AbstractEvent;
 
 
 /**

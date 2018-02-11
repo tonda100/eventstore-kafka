@@ -1,11 +1,6 @@
-package net.osomahe.esk.control;
-
-import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
+package net.osomahe.esk.eventstore.control;
 
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -26,11 +21,11 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.tamaya.inject.api.Config;
 
-import net.osomahe.esk.entity.AbstractEvent;
-import net.osomahe.esk.entity.AsyncEvent;
-import net.osomahe.esk.entity.EventName;
+import net.osomahe.esk.config.boundary.EventStoreSubscriberConfig;
+import net.osomahe.esk.eventstore.entity.AbstractEvent;
+import net.osomahe.esk.eventstore.entity.AsyncEvent;
+import net.osomahe.esk.eventstore.entity.EventName;
 
 
 /**
@@ -43,12 +38,7 @@ import net.osomahe.esk.entity.EventName;
 public class EventStoreSubscriber {
 
     @Inject
-    @Config(value = "event-store.kafka-urls", defaultValue = "localhost:9092")
-    private String kafkaServer;
-
-    @Inject
-    @Config(value = "event-store.application-id", defaultValue = "client-application")
-    private String applicationId;
+    private EventStoreSubscriberConfig config;
 
     @Inject
     private EventSubscriptionDataStore eventDataStore;
@@ -78,11 +68,11 @@ public class EventStoreSubscriber {
 
         eventDataStore.getEventClasses().forEach(this::subscribeForTopic);
         if (mapTopics.size() > 0) {
-            Properties props = new Properties();
-            props.put(BOOTSTRAP_SERVERS_CONFIG, kafkaServer);
-            props.put(GROUP_ID_CONFIG, applicationId);
-            props.put(AUTO_OFFSET_RESET_CONFIG, "earliest");
-            this.consumer = new KafkaConsumer<>(props, new StringDeserializer(), new EventDeserializer());
+            this.consumer = new KafkaConsumer<>(
+                    this.config.getKafkaConsumerConfig(),
+                    new StringDeserializer(),
+                    new EventDeserializer()
+            );
 
             consumer.subscribe(mapTopics.keySet());
             this.sfConsumerPoll = this.mses.scheduleAtFixedRate(this::pollMessages, 1_000, 100, TimeUnit.MILLISECONDS);
@@ -148,4 +138,6 @@ public class EventStoreSubscriber {
             }
         }
     }
+
+
 }

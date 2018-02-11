@@ -1,4 +1,4 @@
-package net.osomahe.esk.control;
+package net.osomahe.esk.eventstore.control;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

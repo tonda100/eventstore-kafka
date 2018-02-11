@@ -1,5 +1,5 @@
 # ToDo List
-Todo List example application shows off how to work with EventStore Kafka.
+Todo List example application shows off how to work with EventStore Kafka. The simplest possible way.
 
 ## Operations
 Possible operations are:

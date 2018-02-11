@@ -3,7 +3,7 @@ package net.osomahe.todolist.cmd.boundary;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 
-import net.osomahe.esk.boundary.EventStorePublisher;
+import net.osomahe.esk.eventstore.boundary.EventStorePublisher;
 import net.osomahe.todolist.cmd.entity.TodoCompletedEvent;
 import net.osomahe.todolist.cmd.entity.TodoCreatedEvent;
 import net.osomahe.todolist.cmd.entity.TodoDeletedEvent;

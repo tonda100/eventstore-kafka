@@ -1,4 +1,4 @@
-package net.osomahe.esk.entity;
+package net.osomahe.esk.eventstore.entity;
 
 import java.time.ZonedDateTime;
 
