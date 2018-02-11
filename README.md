@@ -38,21 +38,21 @@ Configuration possibilities and default values.
 ### Configuration
 There are two ways of configuration.
 1. Application has to produce using `@javax.enterprise.inject.Produces`:
-..* `java.util.Properties` with qualifiers `@KafkaProducerConfig` for overriding producer properties otherwise
+⋅⋅* `java.util.Properties` with qualifiers `@KafkaProducerConfig` for overriding producer properties otherwise
 default values will be in place.
 ```java
 Properties props = new Properties();
 props.put(BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
 props.put(ACKS_CONFIG, "all");
 ```
-..* `java.util.Properties` with qualifiers `@KafkaConsumerConfig` for overriding consumer properties otherwise
+⋅⋅* `java.util.Properties` with qualifiers `@KafkaConsumerConfig` for overriding consumer properties otherwise
 default values will be in place.
 ```java
 Properties props = new Properties();
 props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
 props.put(GROUP_ID_CONFIG, "client-application");
 props.put(AUTO_OFFSET_RESET_CONFIG, "earliest");
-`
+```
 2. Application has to implement `EventStorePublisherConfig` and (or) `EventStoreConsumerConfig` to provide non-default properties
 
 ### Customization
