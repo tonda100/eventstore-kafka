@@ -39,9 +39,8 @@ Configuration possibilities and default values. Unfortunately JavaEE 8 does not 
 I didn't want to  
 ### Configuration
 Unfortunately JavaEE 8 does not provide any standard way. There are two ways of configuring the eventstore-kafka.
-1. Application has to produce using `@javax.enterprise.inject.Produces`:
-  * `java.util.Properties` with qualifiers `@KafkaProducerConfig` for overriding producer properties otherwise
-default values will be in place.
+1. Application has to produce using `@Produces` and correct qualifier see [example](https://github.com/tonda100/eventstore-kafka/blob/dev/examples/02-todolist-advanced/src/main/java/net/osomahe/todolist/EventStoreConfiguration.java):
+  * `java.util.Properties` with qualifiers `@KafkaProducerConfig` for overriding producer properties otherwise default values will be in place.
     ```java
     Properties props = new Properties();
     props.put(BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
