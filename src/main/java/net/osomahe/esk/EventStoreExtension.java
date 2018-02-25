@@ -3,6 +3,7 @@ package net.osomahe.esk;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.AfterDeploymentValidation;
@@ -20,6 +21,7 @@ import net.osomahe.esk.eventstore.entity.EventSubscription;
  * @author Antonin Stoklasek
  */
 public class EventStoreExtension implements Extension {
+    private static final Logger logger = Logger.getLogger(EventStoreExtension.class.getName());
 
     private final List<Class<? extends AbstractEvent>> events = new ArrayList<>();
 
@@ -33,6 +35,7 @@ public class EventStoreExtension implements Extension {
         Method method = processObserverMethod.getAnnotatedMethod().getJavaMember();
         Class<? extends AbstractEvent> eventClass = (Class<? extends AbstractEvent>) method.getParameterTypes()[0];
         events.add(eventClass);
+        logger.info("Found event: " + eventClass);
     }
 
     /**

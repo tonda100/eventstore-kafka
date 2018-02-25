@@ -2,6 +2,7 @@ package net.osomahe.esk.eventstore.control;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
@@ -18,6 +19,7 @@ import net.osomahe.esk.eventstore.entity.EventSubscription;
  */
 @ApplicationScoped
 public class EventSubscriptionDataStore {
+    private static final Logger logger = Logger.getLogger(EventSubscriptionDataStore.class.getName());
 
     private final List<Class<? extends AbstractEvent>> eventClasses = new CopyOnWriteArrayList<>();
 
@@ -29,6 +31,7 @@ public class EventSubscriptionDataStore {
      */
     public void subscribeForEvent(@Observes EventSubscription event) {
         eventClasses.add(event.getEventClass());
+        logger.info("Observed subsription for event: " + event);
     }
 
     /**

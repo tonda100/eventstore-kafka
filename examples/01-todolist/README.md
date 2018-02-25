@@ -7,7 +7,7 @@ Possible operations are:
 Commands:
 * Create ToDo
     ```bash
-    curl -H "Content-Type: application/json" -d '{"name": "learn event sourcing"}' http://localhost:9080/api/todo
+    curl -H "Content-Type: application/json" -d '{"name": "learn event sourcing"}' http://localhost:8080/api/todo
     ```
 * Complete ToDo
     ```bash

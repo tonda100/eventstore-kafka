@@ -1,9 +1,13 @@
 package net.osomahe.esk.eventstore.control;
 
+import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
+
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -37,6 +41,8 @@ import net.osomahe.esk.eventstore.entity.EventName;
 @Startup
 public class EventStoreSubscriber {
 
+    private static final Logger logger = Logger.getLogger(EventStoreSubscriber.class.getName());
+
     @Inject
     private ConfigurationBoundary config;
 
@@ -67,9 +73,12 @@ public class EventStoreSubscriber {
         this.jsonb = JsonbBuilder.create();
 
         eventDataStore.getEventClasses().forEach(this::subscribeForTopic);
+        Properties config = this.config.getKafkaConsumerConfig();
+        logger.info(String.format("Subscribing as %s for topics %s", config.getProperty(GROUP_ID_CONFIG), mapTopics));
+
         if (mapTopics.size() > 0) {
             this.consumer = new KafkaConsumer<>(
-                    this.config.getKafkaConsumerConfig(),
+                    config,
                     new StringDeserializer(),
                     new EventDeserializer()
             );
