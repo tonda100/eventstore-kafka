@@ -21,6 +21,7 @@ import net.osomahe.esk.eventstore.control.TopicService;
 import net.osomahe.esk.eventstore.entity.AbstractEvent;
 import net.osomahe.esk.eventstore.entity.EventNotPublishedException;
 import net.osomahe.esk.eventstore.entity.EventStoreException;
+import net.osomahe.esk.eventstore.entity.LoggableEvent;
 
 
 /**
@@ -74,6 +75,9 @@ public class EventStorePublisher {
                 partition,
                 event.getAggregateId(),
                 event);
+        if (event.getClass().isAnnotationPresent(LoggableEvent.class)) {
+            logger.fine(String.format("Event id %s (%s) publishing %s", event.getAggregateId(), event.getClass().getSimpleName(), record));
+        }
         CompletableFuture<RecordMetadata> futureMetadata = CompletableFuture.supplyAsync(() -> {
             try {
                 return this.kafkaProducer.send(record).get();

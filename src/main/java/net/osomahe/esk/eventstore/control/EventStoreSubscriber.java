@@ -7,11 +7,13 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
+import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.enterprise.concurrent.ManagedScheduledExecutorService;
@@ -30,6 +32,7 @@ import net.osomahe.esk.config.boundary.ConfigurationBoundary;
 import net.osomahe.esk.eventstore.entity.AbstractEvent;
 import net.osomahe.esk.eventstore.entity.AsyncEvent;
 import net.osomahe.esk.eventstore.entity.EventName;
+import net.osomahe.esk.eventstore.entity.LoggableEvent;
 
 
 /**
@@ -67,6 +70,8 @@ public class EventStoreSubscriber {
 
     private ScheduledFuture<?> sfConsumerPoll;
 
+    private String applicationName;
+
 
     @PostConstruct
     public void init() {
@@ -74,7 +79,8 @@ public class EventStoreSubscriber {
 
         eventDataStore.getEventClasses().forEach(this::subscribeForTopic);
         Properties config = this.config.getKafkaConsumerConfig();
-        logger.info(String.format("Subscribing as %s for topics %s", config.getProperty(GROUP_ID_CONFIG), mapTopics));
+        this.applicationName = config.getProperty(GROUP_ID_CONFIG);
+        logger.info(String.format("Subscribing as %s for topics %s", applicationName, mapTopics));
 
         if (mapTopics.size() > 0) {
             this.consumer = new KafkaConsumer<>(
@@ -84,7 +90,15 @@ public class EventStoreSubscriber {
             );
 
             consumer.subscribe(mapTopics.keySet());
-            this.sfConsumerPoll = this.mses.scheduleAtFixedRate(this::pollMessages, 1_000, 100, TimeUnit.MILLISECONDS);
+            this.sfConsumerPoll = this.mses.scheduleAtFixedRate(this::pollMessages, 1_000, 200, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    @Schedule(hour = "*", minute = "*", persistent = false)
+    public void checkLiveness() {
+        if (sfConsumerPoll.isCancelled() || sfConsumerPoll.isDone()) {
+            logger.warning(String.format("KafkaConsumer polling has to be restarted for %s ", applicationName));
+            this.sfConsumerPoll = this.mses.scheduleAtFixedRate(this::pollMessages, 1_000, 200, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -120,20 +134,32 @@ public class EventStoreSubscriber {
      */
     private void pollMessages() {
         synchronized (this.consumer) {
-            ConsumerRecords<String, JsonObject> records = consumer.poll(100);
-            for (ConsumerRecord<String, JsonObject> rcd : records) {
-                JsonObject event = rcd.value();
-                String eventName = event.getString("name");
-                Map<String, Class<? extends AbstractEvent>> mapEvents = mapTopics.get(rcd.topic());
-                if (mapEvents.containsKey(eventName)) {
-                    Class<? extends AbstractEvent> eventClass = mapEvents.get(eventName);
-                    AbstractEvent data = this.jsonb.fromJson(event.getJsonObject("data").toString(), eventClass);
-                    if (eventClass.isAnnotationPresent(AsyncEvent.class)) {
-                        this.events.fireAsync(data);
-                    } else {
-                        this.events.fire(data);
+            try {
+                ConsumerRecords<String, JsonObject> records = consumer.poll(100);
+                for (ConsumerRecord<String, JsonObject> rcd : records) {
+                    JsonObject event = rcd.value();
+                    String eventName = event.getString("name");
+                    Map<String, Class<? extends AbstractEvent>> mapEvents = mapTopics.get(rcd.topic());
+                    if (mapEvents.containsKey(eventName)) {
+                        Class<? extends AbstractEvent> eventClass = mapEvents.get(eventName);
+                        AbstractEvent data = this.jsonb.fromJson(event.getJsonObject("data").toString(), eventClass);
+                        if (data.getClass().isAnnotationPresent(LoggableEvent.class)) {
+                            logger.fine(String.format("Event id %s (%s) firing for %s %s",
+                                    data.getAggregateId(),
+                                    data.getClass().getSimpleName(),
+                                    applicationName,
+                                    data)
+                            );
+                        }
+                        if (eventClass.isAnnotationPresent(AsyncEvent.class)) {
+                            this.events.fireAsync(data);
+                        } else {
+                            this.events.fire(data);
+                        }
                     }
                 }
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Error in polling kafka messages", e);
             }
         }
     }
