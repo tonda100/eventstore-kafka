@@ -151,10 +151,14 @@ public class EventStoreSubscriber {
                                     data)
                             );
                         }
-                        if (eventClass.isAnnotationPresent(AsyncEvent.class)) {
-                            this.events.fireAsync(data);
-                        } else {
-                            this.events.fire(data);
+                        try {
+                            if (eventClass.isAnnotationPresent(AsyncEvent.class)) {
+                                this.events.fireAsync(data);
+                            } else {
+                                this.events.fire(data);
+                            }
+                        } catch (Exception e) {
+                            logger.log(Level.SEVERE, "Error in firing polled kafka messages", e);
                         }
                     }
                 }
