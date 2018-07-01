@@ -31,7 +31,7 @@ public class EventSubscriptionDataStore {
      */
     public void subscribeForEvent(@Observes EventSubscription event) {
         eventClasses.add(event.getEventClass());
-        logger.info("Observed subsription for event: " + event);
+        logger.info("Observed subscription for event: " + event);
     }
 
     /**
