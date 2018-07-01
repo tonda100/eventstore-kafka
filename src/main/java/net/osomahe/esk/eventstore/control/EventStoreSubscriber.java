@@ -1,9 +1,6 @@
 package net.osomahe.esk.eventstore.control;
 
-import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
-
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -18,6 +15,7 @@ import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.enterprise.concurrent.ManagedScheduledExecutorService;
 import javax.enterprise.event.Event;
+import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.json.JsonObject;
 import javax.json.bind.Jsonb;
@@ -26,9 +24,7 @@ import javax.json.bind.JsonbBuilder;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.StringDeserializer;
 
-import net.osomahe.esk.config.boundary.ConfigurationBoundary;
 import net.osomahe.esk.eventstore.entity.AbstractEvent;
 import net.osomahe.esk.eventstore.entity.AsyncEvent;
 import net.osomahe.esk.eventstore.entity.EventName;
@@ -47,9 +43,6 @@ public class EventStoreSubscriber {
     private static final Logger logger = Logger.getLogger(EventStoreSubscriber.class.getName());
 
     @Inject
-    private ConfigurationBoundary config;
-
-    @Inject
     private EventSubscriptionDataStore eventDataStore;
 
     @Inject
@@ -66,11 +59,12 @@ public class EventStoreSubscriber {
 
     private Jsonb jsonb;
 
+    @Inject
+    private Instance<KafkaConsumer<String, JsonObject>> instanceConsumer;
+
     private KafkaConsumer<String, JsonObject> consumer;
 
     private ScheduledFuture<?> sfConsumerPoll;
-
-    private String applicationName;
 
 
     @PostConstruct
@@ -78,16 +72,10 @@ public class EventStoreSubscriber {
         this.jsonb = JsonbBuilder.create();
 
         eventDataStore.getEventClasses().forEach(this::subscribeForTopic);
-        Properties config = this.config.getKafkaConsumerConfig();
-        this.applicationName = config.getProperty(GROUP_ID_CONFIG);
-        logger.info(String.format("Subscribing as %s for topics %s", applicationName, mapTopics));
+        logger.info(String.format("Subscribing for topics %s", mapTopics));
 
         if (mapTopics.size() > 0) {
-            this.consumer = new KafkaConsumer<>(
-                    config,
-                    new StringDeserializer(),
-                    new EventDeserializer()
-            );
+            this.consumer = instanceConsumer.get();
 
             consumer.subscribe(mapTopics.keySet());
             this.sfConsumerPoll = this.mses.scheduleAtFixedRate(this::pollMessages, 1_000, 200, TimeUnit.MILLISECONDS);
@@ -97,7 +85,7 @@ public class EventStoreSubscriber {
     @Schedule(hour = "*", minute = "*", persistent = false)
     public void checkLiveness() {
         if (sfConsumerPoll.isCancelled() || sfConsumerPoll.isDone()) {
-            logger.warning(String.format("KafkaConsumer polling has to be restarted for %s ", applicationName));
+            logger.warning(String.format("KafkaConsumer polling has to be restarted"));
             this.sfConsumerPoll = this.mses.scheduleAtFixedRate(this::pollMessages, 1_000, 200, TimeUnit.MILLISECONDS);
         }
     }
@@ -144,10 +132,9 @@ public class EventStoreSubscriber {
                         Class<? extends AbstractEvent> eventClass = mapEvents.get(eventName);
                         AbstractEvent data = this.jsonb.fromJson(event.getJsonObject("data").toString(), eventClass);
                         if (data.getClass().isAnnotationPresent(LoggableEvent.class)) {
-                            logger.fine(String.format("Event id %s (%s) firing for %s %s",
+                            logger.fine(String.format("Event id %s (%s) firing data %s",
                                     data.getAggregateId(),
                                     data.getClass().getSimpleName(),
-                                    applicationName,
                                     data)
                             );
                         }
