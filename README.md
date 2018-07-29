@@ -12,7 +12,7 @@ How to quickly start using the Event Store Kafka with your Java EE 8 project.
     <dependency>
         <groupId>net.osomahe</groupId>
         <artifactId>eventstore-kafka</artifactId>
-        <version>0.2.0</version>
+        <version>0.4.0</version>
     </dependency>
     ```
 2. Added extensions `src/main/resources/META-INF/services/javax.enterprise.inject.spi.Extension`
