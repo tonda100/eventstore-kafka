@@ -1,7 +1,9 @@
 package net.osomahe.esk.eventstore.boundary;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -18,8 +20,10 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
 import net.osomahe.esk.eventstore.control.TopicService;
-import net.osomahe.esk.eventstore.entity.AbstractEvent;
+import net.osomahe.esk.eventstore.entity.EventGroupKey;
+import net.osomahe.esk.eventstore.entity.EventKey;
 import net.osomahe.esk.eventstore.entity.EventNotPublishedException;
+import net.osomahe.esk.eventstore.entity.EventStoreEvent;
 import net.osomahe.esk.eventstore.entity.EventStoreException;
 import net.osomahe.esk.eventstore.entity.LoggableEvent;
 
@@ -35,7 +39,7 @@ public class EventStorePublisher {
     private static final Logger logger = Logger.getLogger(EventStorePublisher.class.getName());
 
     @Inject
-    private KafkaProducer<String, AbstractEvent> kafkaProducer;
+    private KafkaProducer<String, EventStoreEvent> kafkaProducer;
 
     @Inject
     private TopicService topicService;
@@ -43,12 +47,12 @@ public class EventStorePublisher {
     /**
      * Publishes the given event to the Kafka topic synchronously.
      *
-     * @param <T> event supposed to extend {@link AbstractEvent}
+     * @param <T> event supposed to extend {@link EventStoreEvent}
      * @param event event to be published
      * @return metadata about the record
      * @throws EventNotPublishedException when publish of event failed this runtime exception is thrown
      */
-    public <T extends AbstractEvent> RecordMetadata publish(T event) {
+    public <T extends EventStoreEvent> RecordMetadata publish(T event) {
         try {
             RecordMetadata metadata = publishAsync(event).get();
             if (metadata == null) {
@@ -63,20 +67,18 @@ public class EventStorePublisher {
     /**
      * Publishes the given event to the Kafka topic asynchronously.
      *
-     * @param <T> event supposed to extend {@link AbstractEvent}
+     * @param <T> event supposed to extend {@link EventStoreEvent}
      * @param event event to be published
      * @return Future of record metadata
      */
-    public <T extends AbstractEvent> CompletableFuture<RecordMetadata> publishAsync(T event) {
-        fillMetadata(event);
-        int partition = getPartition(event);
-        ProducerRecord<String, AbstractEvent> record = new ProducerRecord<>(
+    public <T extends EventStoreEvent> CompletableFuture<RecordMetadata> publishAsync(T event) {
+        ProducerRecord<String, EventStoreEvent> record = new ProducerRecord<>(
                 topicService.getTopicName(event.getClass()),
-                partition,
-                event.getAggregateId(),
+                getPartition(event),
+                getEventKey(event),
                 event);
         if (event.getClass().isAnnotationPresent(LoggableEvent.class)) {
-            logger.fine(String.format("Event id %s (%s) publishing %s", event.getAggregateId(), event.getClass().getSimpleName(), record));
+            logger.fine(String.format("EventStoreEvent (%s) publishing %s", event.getClass().getSimpleName(), record));
         }
         CompletableFuture<RecordMetadata> futureMetadata = CompletableFuture.supplyAsync(() -> {
             try {
@@ -85,10 +87,18 @@ public class EventStorePublisher {
                 throw new EventStoreException("Cannot publish the event: " + event, e);
             }
         }).exceptionally(throwable -> {
-            logger.log(Level.SEVERE, "Event was NOT published", throwable);
+            logger.log(Level.SEVERE, "EventStoreEvent was NOT published", throwable);
             return null;
         });
         return futureMetadata;
+    }
+
+    private <T extends EventStoreEvent> String getEventKey(T event) {
+        Object eventKey = getValueForAnnotation(event, event.getClass(), EventKey.class);
+        if (eventKey != null) {
+            return eventKey.toString();
+        }
+        return System.currentTimeMillis() + "-" + UUID.randomUUID().toString();
     }
 
     /**
@@ -98,32 +108,65 @@ public class EventStorePublisher {
      * @param <T>
      * @return partition number of given event
      */
-    private <T extends AbstractEvent> int getPartition(T event) {
-        if (event.getAggregateId().contains("-")) {
-            String lastPart = event.getAggregateId().substring(event.getAggregateId().lastIndexOf('-') + 1);
-            return Integer.parseInt(lastPart);
+    private <T extends EventStoreEvent> Integer getPartition(T event) {
+        Object groupKeyValue = getGroupKeyValue(event);
+        if (groupKeyValue == null) {
+            return null;
         }
-        throw new IllegalArgumentException("Event aggregateId does NOT contain info about partition number. event: " + event);
+        int partitionCount = topicService.getPartitionCount(event.getClass());
+        return Math.abs(groupKeyValue.hashCode()) % partitionCount;
     }
 
-    /**
-     * Fills necessary metadata of given event to be successfully published.
-     * It fills aggregateId in format UUID-epochMillis-partitionNumber and dateTime with current value.
-     *
-     * @param event
-     * @param <T>
-     */
-    private <T extends AbstractEvent> void fillMetadata(T event) {
-        if (event.getAggregateId() == null) {
-            int partitionCount = topicService.getPartitionCount(event.getClass());
-            String uuid = UUID.randomUUID().toString();
-            int partition = Math.abs(uuid.hashCode()) % partitionCount;
-            String aggregateId = String.format("%s-%s-%s", uuid, System.currentTimeMillis(), partition);
-            event.setAggregateId(aggregateId);
+    private <T extends EventStoreEvent> Object getGroupKeyValue(T event) {
+        return getValueForAnnotation(event, event.getClass(), EventGroupKey.class);
+    }
+
+
+    private <T extends EventStoreEvent> Object getValueForAnnotation(T event, Class<?> eventClass, Class<? extends Annotation> annotation) {
+        Object valueFromField = getValueFromField(event, eventClass, annotation);
+        if (valueFromField != null) {
+            return valueFromField;
         }
-        if (event.getDateTime() == null) {
-            event.setDateTime(ZonedDateTime.now(ZoneOffset.UTC));
+
+        Object valueFromMethod = getValueFromMethod(event, eventClass, annotation);
+        if (valueFromMethod != null) {
+            return valueFromMethod;
         }
+
+        if (eventClass.getSuperclass() != null) {
+            return getValueForAnnotation(event, eventClass.getSuperclass(), annotation);
+        }
+        return null;
+    }
+
+    private <T extends EventStoreEvent> Object getValueFromField(T event, Class<?> eventClass, Class<? extends Annotation> annotation) {
+        for (Field f : eventClass.getDeclaredFields()) {
+            if (f.isAnnotationPresent(annotation)) {
+                try {
+                    f.setAccessible(true);
+                    return f.get(event);
+                } catch (IllegalAccessException e) {
+                    logger.log(Level.SEVERE, "Cannot get field value of " + annotation + " for event: " + event, e);
+                }
+            }
+        }
+        return null;
+    }
+
+    private <T extends EventStoreEvent> Object getValueFromMethod(T event, Class<?> eventClass, Class<? extends Annotation> annotation) {
+        for (Method method : eventClass.getDeclaredMethods()) {
+            if (method.isAnnotationPresent(annotation)) {
+                try {
+                    if (!method.isAccessible()) {
+                        method.setAccessible(true);
+                    }
+                    return method.invoke(event);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    logger.log(Level.SEVERE, "Cannot get method value of " + annotation + " for event: " + event, e);
+                }
+            }
+        }
+        return null;
     }
 
     @PreDestroy

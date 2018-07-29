@@ -1,6 +1,7 @@
 package net.osomahe.todolist.cmd.entity;
 
-import net.osomahe.esk.eventstore.entity.AbstractEvent;
+import net.osomahe.esk.eventstore.entity.EventStoreEvent;
+import net.osomahe.esk.eventstore.entity.EventGroupKey;
 
 
 /**
@@ -8,7 +9,10 @@ import net.osomahe.esk.eventstore.entity.AbstractEvent;
  *
  * @author Antonin Stoklasek
  */
-public class TodoCreatedEvent extends AbstractEvent {
+public class TodoCreatedEvent implements EventStoreEvent {
+
+    @EventGroupKey
+    private String id;
 
     private String name;
 
@@ -20,10 +24,19 @@ public class TodoCreatedEvent extends AbstractEvent {
         this.name = name;
     }
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
     @Override
     public String toString() {
         return "TodoCreatedEvent{" +
-                "name='" + name + '\'' +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
                 "} " + super.toString();
     }
 }

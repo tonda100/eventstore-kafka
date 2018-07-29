@@ -11,7 +11,7 @@ import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.Extension;
 import javax.enterprise.inject.spi.ProcessObserverMethod;
 
-import net.osomahe.esk.eventstore.entity.AbstractEvent;
+import net.osomahe.esk.eventstore.entity.EventStoreEvent;
 import net.osomahe.esk.eventstore.entity.EventSubscription;
 
 
@@ -23,17 +23,17 @@ import net.osomahe.esk.eventstore.entity.EventSubscription;
 public class EventStoreExtension implements Extension {
     private static final Logger logger = Logger.getLogger(EventStoreExtension.class.getName());
 
-    private final List<Class<? extends AbstractEvent>> events = new ArrayList<>();
+    private final List<Class<? extends EventStoreEvent>> events = new ArrayList<>();
 
     /**
-     * Processes observation of events extended from {@link AbstractEvent}.
+     * Processes observation of events extended from {@link EventStoreEvent}.
      * Puts found events to list of events for later subscription.
      *
      * @param processObserverMethod process observer object
      */
-    public void processObserverMethod(@Observes final ProcessObserverMethod<? extends AbstractEvent, ?> processObserverMethod) {
+    public void processObserverMethod(@Observes final ProcessObserverMethod<? extends EventStoreEvent, ?> processObserverMethod) {
         Method method = processObserverMethod.getAnnotatedMethod().getJavaMember();
-        Class<? extends AbstractEvent> eventClass = (Class<? extends AbstractEvent>) method.getParameterTypes()[0];
+        Class<? extends EventStoreEvent> eventClass = (Class<? extends EventStoreEvent>) method.getParameterTypes()[0];
         events.add(eventClass);
         logger.info("Found event: " + eventClass);
     }

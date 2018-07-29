@@ -1,19 +1,19 @@
 package net.osomahe.esk.eventstore.entity;
 
 /**
- * Event class used to subscribe for specific event in Kafka.
+ * EventStoreEvent class used to subscribe for specific event in Kafka.
  *
  * @author Antonin Stoklasek
  */
 public class EventSubscription {
 
-    private final Class<? extends AbstractEvent> eventClass;
+    private final Class<? extends EventStoreEvent> eventClass;
 
-    public EventSubscription(Class<? extends AbstractEvent> eventClass) {
+    public EventSubscription(Class<? extends EventStoreEvent> eventClass) {
         this.eventClass = eventClass;
     }
 
-    public Class<? extends AbstractEvent> getEventClass() {
+    public Class<? extends EventStoreEvent> getEventClass() {
         return eventClass;
     }
 

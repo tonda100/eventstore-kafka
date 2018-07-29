@@ -2,6 +2,7 @@ package net.osomahe.esk.eventstore.control;
 
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 
+import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,9 +30,10 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
 import net.osomahe.esk.config.boundary.ConfigurationBoundary;
-import net.osomahe.esk.eventstore.entity.AbstractEvent;
 import net.osomahe.esk.eventstore.entity.AsyncEvent;
+import net.osomahe.esk.eventstore.entity.EventExpirationSecs;
 import net.osomahe.esk.eventstore.entity.EventName;
+import net.osomahe.esk.eventstore.entity.EventStoreEvent;
 import net.osomahe.esk.eventstore.entity.LoggableEvent;
 
 
@@ -56,13 +58,16 @@ public class EventStoreSubscriber {
     private TopicService topicService;
 
     @Inject
-    private Event<AbstractEvent> events;
+    private Event<EventStoreEvent> events;
 
     @Resource
     private ManagedScheduledExecutorService mses;
 
     // map of topics used to find out what event should be fired for the application
-    private Map<String, Map<String, Class<? extends AbstractEvent>>> mapTopics = new ConcurrentHashMap<>();
+    private Map<String, Map<String, Class<? extends EventStoreEvent>>> mapTopics = new ConcurrentHashMap<>();
+
+    // map used for what is the expiration period of the event
+    private Map<Class<? extends EventStoreEvent>, Long> mapExpiration = new ConcurrentHashMap<>();
 
     private Jsonb jsonb;
 
@@ -96,7 +101,7 @@ public class EventStoreSubscriber {
 
     @Schedule(hour = "*", minute = "*", persistent = false)
     public void checkLiveness() {
-        if (sfConsumerPoll.isCancelled() || sfConsumerPoll.isDone()) {
+        if (this.consumer != null && (sfConsumerPoll.isCancelled() || sfConsumerPoll.isDone())) {
             logger.warning(String.format("KafkaConsumer polling has to be restarted for %s ", applicationName));
             this.sfConsumerPoll = this.mses.scheduleAtFixedRate(this::pollMessages, 1_000, 200, TimeUnit.MILLISECONDS);
         }
@@ -107,12 +112,27 @@ public class EventStoreSubscriber {
      *
      * @param eventClass event which should be consumed from Kafka and fired to outside world
      */
-    private void subscribeForTopic(Class<? extends AbstractEvent> eventClass) {
+    private void subscribeForTopic(Class<? extends EventStoreEvent> eventClass) {
         String topicName = topicService.getTopicName(eventClass);
         if (!mapTopics.containsKey(topicName)) {
             mapTopics.put(topicName, new ConcurrentHashMap<>());
         }
         mapTopics.get(topicName).put(getEventName(eventClass), eventClass);
+
+        if (!mapExpiration.containsKey(eventClass)) {
+            Long eventExpiration = getEventExpiration(eventClass);
+            if (eventExpiration != null) {
+                mapExpiration.put(eventClass, eventExpiration);
+            }
+        }
+    }
+
+    private Long getEventExpiration(Class<? extends EventStoreEvent> eventClass) {
+        EventExpirationSecs expirationSecs = eventClass.getAnnotation(EventExpirationSecs.class);
+        if (expirationSecs != null) {
+            return expirationSecs.value();
+        }
+        return null;
     }
 
     /**
@@ -121,7 +141,7 @@ public class EventStoreSubscriber {
      * @param eventClass event class for which the event name will be returned
      * @return event name
      */
-    private String getEventName(Class<? extends AbstractEvent> eventClass) {
+    private String getEventName(Class<? extends EventStoreEvent> eventClass) {
         EventName eventName = eventClass.getAnnotation(EventName.class);
         if (eventName != null) {
             return eventName.value();
@@ -139,13 +159,16 @@ public class EventStoreSubscriber {
                 for (ConsumerRecord<String, JsonObject> rcd : records) {
                     JsonObject event = rcd.value();
                     String eventName = event.getString("name");
-                    Map<String, Class<? extends AbstractEvent>> mapEvents = mapTopics.get(rcd.topic());
+                    Map<String, Class<? extends EventStoreEvent>> mapEvents = mapTopics.get(rcd.topic());
                     if (mapEvents.containsKey(eventName)) {
-                        Class<? extends AbstractEvent> eventClass = mapEvents.get(eventName);
-                        AbstractEvent data = this.jsonb.fromJson(event.getJsonObject("data").toString(), eventClass);
+                        Class<? extends EventStoreEvent> eventClass = mapEvents.get(eventName);
+                        if (isEventExpired(event, eventClass)) {
+                            logger.fine(String.format("Skipping expired event: %s", event));
+                            continue;
+                        }
+                        EventStoreEvent data = this.jsonb.fromJson(event.getJsonObject("data").toString(), eventClass);
                         if (data.getClass().isAnnotationPresent(LoggableEvent.class)) {
-                            logger.fine(String.format("Event id %s (%s) firing for %s %s",
-                                    data.getAggregateId(),
+                            logger.fine(String.format("EventStoreEvent (%s) firing for %s %s",
                                     data.getClass().getSimpleName(),
                                     applicationName,
                                     data)
@@ -166,6 +189,16 @@ public class EventStoreSubscriber {
                 logger.log(Level.SEVERE, "Error in polling kafka messages", e);
             }
         }
+    }
+
+    private boolean isEventExpired(JsonObject event, Class<? extends EventStoreEvent> eventClass) {
+        if (mapExpiration.containsKey(eventClass) && event.containsKey("dateTime")) {
+            long dateTime = event.getJsonNumber("dateTime").longValue();
+            long expirationSecs = mapExpiration.get(eventClass);
+            long now = ZonedDateTime.now().toEpochSecond();
+            return now > dateTime + expirationSecs;
+        }
+        return false;
     }
 
     @PreDestroy

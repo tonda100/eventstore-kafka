@@ -21,19 +21,19 @@ public class TodoEventHandler {
 
     public void handleCreate(@Observes TodoCreatedEvent event) {
         TodoAggregate todo = new TodoAggregate();
-        todo.setId(event.getAggregateId());
+        todo.setId(event.getId());
         todo.setName(event.getName());
         todo.setCompleted(false);
         ds.addTodo(todo);
     }
 
     public void handleCompleted(@Observes TodoCompletedEvent event) {
-        TodoAggregate todo = ds.getTodo(event.getAggregateId());
+        TodoAggregate todo = ds.getTodo(event.getId());
         todo.setCompleted(true);
     }
 
     public void handleDelete(@Observes TodoDeletedEvent event) {
-        ds.removeTodo(event.getAggregateId());
+        ds.removeTodo(event.getId());
     }
 
 }

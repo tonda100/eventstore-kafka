@@ -1,6 +1,6 @@
 # ToDo List Expert
 Based on [01-todolist](../01-todolist) with some more stuff.
-* Configuration by implementing `EventStorePublisherConfig` and `EventStoreSubscriberConfig` [see](src/main/java/net/osomahe/todolist/EventStoreConfiguration.java)
+* Configuration by implementing `EventStorePublisherConfig` and `EventStoreSubscriberConfig` [see](src/main/java/net/osomahe/todolist/net.osomahe.realapp.EventStoreConfiguration.java)
 * Using custom topic name e.g. [TodoCreatedEvent.java](src/main/java/net/osomahe/todolist/cmd/entity/TodoCreatedEvent.java) via parent event class 
 [TodoEvent.java](src/main/java/net/osomahe/todolist/cmd/entity/TodoEvent.java)
 [Apache Tamaya](http://tamaya.incubator.apache.org/) was added as an example of configuration provider.

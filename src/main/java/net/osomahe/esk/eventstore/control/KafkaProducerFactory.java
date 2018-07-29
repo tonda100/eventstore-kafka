@@ -13,7 +13,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 import net.osomahe.esk.config.boundary.ConfigurationBoundary;
-import net.osomahe.esk.eventstore.entity.AbstractEvent;
+import net.osomahe.esk.eventstore.entity.EventStoreEvent;
 
 
 /**
@@ -33,7 +33,7 @@ public class KafkaProducerFactory {
      * @return KafkaProducer instance
      */
     @Produces
-    public KafkaProducer<String, AbstractEvent> getKafkaProducer() {
+    public KafkaProducer<String, EventStoreEvent> getKafkaProducer() {
         Properties props = config.getKafkaProducerConfig();
         props.put(KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         props.put(VALUE_SERIALIZER_CLASS_CONFIG, EventSerializer.class.getName());

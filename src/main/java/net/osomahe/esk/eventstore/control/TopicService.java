@@ -17,7 +17,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
 import net.osomahe.esk.config.boundary.ConfigurationBoundary;
-import net.osomahe.esk.eventstore.entity.AbstractEvent;
+import net.osomahe.esk.eventstore.entity.EventStoreEvent;
 import net.osomahe.esk.eventstore.entity.TopicName;
 
 
@@ -37,12 +37,12 @@ public class TopicService {
     private ConfigurationBoundary config;
 
     /**
-     * Provides topic name for given {@link AbstractEvent}.
+     * Provides topic name for given {@link EventStoreEvent}.
      *
      * @param eventClass event for which the topic name is requested
      * @return topic name
      */
-    public String getTopicName(Class<? extends AbstractEvent> eventClass) {
+    public String getTopicName(Class<? extends EventStoreEvent> eventClass) {
         TopicName topicName = eventClass.getAnnotation(TopicName.class);
         if (topicName == null) {
             return DEFAULT_TOPIC;
@@ -56,7 +56,7 @@ public class TopicService {
      * @param eventClass class of the event
      * @return number of topic's partitions
      */
-    public int getPartitionCount(Class<? extends AbstractEvent> eventClass) {
+    public int getPartitionCount(Class<? extends EventStoreEvent> eventClass) {
         return getPartitionCount(getTopicName(eventClass));
     }
 

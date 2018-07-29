@@ -1,5 +1,7 @@
 package net.osomahe.todolist.cmd.boundary;
 
+import java.util.UUID;
+
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 
@@ -21,19 +23,20 @@ public class TodoCommandService {
 
     public void createTodo(TodoInfo todoInfo) {
         TodoCreatedEvent event = new TodoCreatedEvent();
+        event.setId(UUID.randomUUID().toString());
         event.setName(todoInfo.getName());
         this.esPublisher.publish(event);
     }
 
     public void setTodoCompleted(String id) {
         TodoCompletedEvent event = new TodoCompletedEvent();
-        event.setAggregateId(id);
+        event.setId(id);
         this.esPublisher.publish(event);
     }
 
     public void deleteTodo(String id) {
         TodoDeletedEvent event = new TodoDeletedEvent();
-        event.setAggregateId(id);
+        event.setId(id);
         this.esPublisher.publish(event);
     }
 }

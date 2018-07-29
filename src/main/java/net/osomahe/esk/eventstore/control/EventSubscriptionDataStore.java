@@ -7,12 +7,12 @@ import java.util.logging.Logger;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 
-import net.osomahe.esk.eventstore.entity.AbstractEvent;
+import net.osomahe.esk.eventstore.entity.EventStoreEvent;
 import net.osomahe.esk.eventstore.entity.EventSubscription;
 
 
 /**
- * CDI Event subscription data store for events which were recognized by CDI extension to be observed.
+ * CDI EventStoreEvent subscription data store for events which were recognized by CDI extension to be observed.
  * This data store will later provide the event classes to {@link EventStoreSubscriber} which will handle the subscription.
  *
  * @author Antonin Stoklasek
@@ -21,7 +21,7 @@ import net.osomahe.esk.eventstore.entity.EventSubscription;
 public class EventSubscriptionDataStore {
     private static final Logger logger = Logger.getLogger(EventSubscriptionDataStore.class.getName());
 
-    private final List<Class<? extends AbstractEvent>> eventClasses = new CopyOnWriteArrayList<>();
+    private final List<Class<? extends EventStoreEvent>> eventClasses = new CopyOnWriteArrayList<>();
 
 
     /**
@@ -37,9 +37,9 @@ public class EventSubscriptionDataStore {
     /**
      * Provides list of events which supposed to be consumed by application.
      *
-     * @return list of {@link AbstractEvent} sub-classes
+     * @return list of {@link EventStoreEvent} sub-classes
      */
-    public List<Class<? extends AbstractEvent>> getEventClasses() {
+    public List<Class<? extends EventStoreEvent>> getEventClasses() {
         return eventClasses;
     }
 }

@@ -7,13 +7,13 @@ package net.osomahe.esk.eventstore.entity;
  */
 public class EventNotPublishedException extends RuntimeException {
 
-    private final AbstractEvent event;
+    private final EventStoreEvent event;
 
-    public EventNotPublishedException(AbstractEvent event) {
+    public EventNotPublishedException(EventStoreEvent event) {
         this.event = event;
     }
 
-    public AbstractEvent getEvent() {
+    public EventStoreEvent getEvent() {
         return event;
     }
 }

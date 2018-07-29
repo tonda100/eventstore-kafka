@@ -1,7 +1,7 @@
 # ToDo List Advanced
 This is the exact copy of [01-todolist](../01-todolist) plus example of configuration via `@Produces` Properties with qualifiers.
 
-Example of configuration see [EventStoreConfiguration.java](src/main/java/net/osomahe/todolist/EventStoreConfiguration.java)
+Example of configuration see [net.osomahe.realapp.EventStoreConfiguration.java](src/main/java/net/osomahe/todolist/net.osomahe.realapp.EventStoreConfiguration.java)
 
 ## Operations
 Possible operations are:
