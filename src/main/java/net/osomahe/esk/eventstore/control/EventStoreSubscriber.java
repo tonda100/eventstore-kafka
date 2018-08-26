@@ -2,7 +2,8 @@ package net.osomahe.esk.eventstore.control;
 
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 
-import java.time.ZonedDateTime;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,6 +28,7 @@ import javax.json.bind.JsonbBuilder;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.record.TimestampType;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
 import net.osomahe.esk.config.boundary.ConfigurationBoundary;
@@ -155,14 +157,14 @@ public class EventStoreSubscriber {
     private void pollMessages() {
         synchronized (this.consumer) {
             try {
-                ConsumerRecords<String, JsonObject> records = consumer.poll(100);
+                ConsumerRecords<String, JsonObject> records = consumer.poll(Duration.of(1, ChronoUnit.SECONDS));
                 for (ConsumerRecord<String, JsonObject> rcd : records) {
                     JsonObject event = rcd.value();
                     String eventName = event.getString("name");
                     Map<String, Class<? extends EventStoreEvent>> mapEvents = mapTopics.get(rcd.topic());
                     if (mapEvents.containsKey(eventName)) {
                         Class<? extends EventStoreEvent> eventClass = mapEvents.get(eventName);
-                        if (isEventExpired(event, eventClass)) {
+                        if (isEventExpired(rcd, eventClass)) {
                             logger.fine(String.format("Skipping expired event: %s", event));
                             continue;
                         }
@@ -191,12 +193,12 @@ public class EventStoreSubscriber {
         }
     }
 
-    private boolean isEventExpired(JsonObject event, Class<? extends EventStoreEvent> eventClass) {
-        if (mapExpiration.containsKey(eventClass) && event.containsKey("dateTime")) {
-            long dateTime = event.getJsonNumber("dateTime").longValue();
+    private boolean isEventExpired(ConsumerRecord<String, JsonObject> consumerRecord, Class<? extends EventStoreEvent> eventClass) {
+        if (mapExpiration.containsKey(eventClass) && consumerRecord.timestampType() == TimestampType.CREATE_TIME) {
+            long createMilis = consumerRecord.timestamp();
             long expirationSecs = mapExpiration.get(eventClass);
-            long now = ZonedDateTime.now().toEpochSecond();
-            return now > dateTime + expirationSecs;
+            long nowMilis = System.currentTimeMillis();
+            return nowMilis > createMilis + expirationSecs * 1_000;
         }
         return false;
     }
