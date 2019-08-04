@@ -21,13 +21,14 @@ Installation steps needs to be done prior the development.
 ```bash
 docker network create eventstore
 
-docker run -d --name es-zk --net eventstore -p 7072:7072 zookeeper:3.4.12
+docker run -d --name es-zk --net eventstore -p 7072:7072 zookeeper:3.5.5
 
 docker run -d --name es-kafka --net eventstore -p 9092:9092 -e KAFKA_ZOOKEEPER_CONNECT=es-zk:2181 \
 -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 -e KAFKA_BROKER_ID=0 \
 -e KAFKA_NUM_PARTITIONS=32 -e KAFKA_LOG_RETENTION_MS=-1 -e KAFKA_COMPRESSION_TYPE=gzip \
 -e KAFKA_DELETE_TOPIC_ENABLE=false -e KAFKA_LOG_CLEANUP_POLICY=compact \
--e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 -e KAFKA_HEAP_OPTS="-Xmx512m -Xms512m" confluentinc/cp-kafka:4.1.1
+-e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 -e KAFKA_HEAP_OPTS="-Xmx512m -Xms512m" \
+-e CONFLUENT_SUPPORT_METRICS_ENABLE=false confluentinc/cp-kafka:5.3.0
 
 docker exec es-kafka kafka-topics --zookeeper=es-zk:2181 --list
 
